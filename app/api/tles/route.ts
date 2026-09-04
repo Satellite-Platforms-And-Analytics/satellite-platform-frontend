@@ -28,6 +28,26 @@ import { createClient } from "@supabase/supabase-js";
 export const revalidate = 1800; // 30 min; upstream refreshes every 2 hours
 
 /**
+ * Serverless execution ceiling, in seconds.
+ *
+ * PostgREST caps a response at 1,000 rows, so reading the 18,052-object
+ * catalogue is ~19 sequential round trips to Supabase. Locally that is a
+ * couple of seconds; on a cold serverless function in a different region
+ * it is slower, and Vercel's default ceiling on Hobby is 10s. Exceeding
+ * it returns a 504 with no application error - the page would show
+ * "Could not load element sets" and the cause would be invisible.
+ *
+ * 30s is headroom, not a measurement. The real number is in Vercel's
+ * function logs after the first deploy; tighten this once it is known,
+ * the same way ingest_visibility.yml's timeout was set from a measured
+ * 71-second run rather than a guess.
+ *
+ * This only bites on a cache miss. `Cache-Control: s-maxage=1800` means
+ * roughly 48 origin hits a day, whatever the traffic.
+ */
+export const maxDuration = 30;
+
+/**
  * How many objects to send by default.
  *
  * The catalogue is 18,044 objects. Sending all of them is ~2.7 MB and asks
