@@ -1,8 +1,10 @@
 import Globe from "@/components/Globe";
+import Nav from "@/components/Nav";
 
 export default function Home() {
   return (
     <main>
+      <Nav current="globe" />
       <header>
         <h1>Satellite Platform</h1>
         <p>
