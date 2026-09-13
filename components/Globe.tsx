@@ -45,8 +45,26 @@ const REGIME_COLOR: Record<string, string> = {
 };
 const DEFAULT_COLOR = "#94a3b8";
 
-/** world-atlas land, fetched at runtime. The globe works without it. */
-const LAND_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json";
+/**
+ * Land outlines, code-split and served from our own origin.
+ *
+ * SECURITY: this used to be
+ * `fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json")` -
+ * a runtime request to a third party, on a floating major version, with
+ * no integrity check. The parsed result was fed straight to topojson and
+ * drawn, so the blast radius was bounded (no script execution), but it
+ * made the page's behaviour depend on a host nobody here controls, and it
+ * meant `connect-src` could never be `'self'` - a content security policy
+ * that has to allow an arbitrary CDN is most of the way to no policy.
+ *
+ * `world-atlas@2.0.2` is now a dependency: pinned in package-lock.json
+ * with an integrity hash, resolved at install time where it can be
+ * audited, and shipped from the same origin as everything else. The
+ * dynamic import keeps it out of the initial bundle, so the globe still
+ * paints before the coastlines arrive and still works if they never do.
+ *
+ * Changed 2026-09-13.
+ */
 
 export default function Globe() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -119,9 +137,9 @@ export default function Globe() {
   // ── Land outlines, best effort ───────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
-    fetch(LAND_URL)
-      .then((r) => r.json())
-      .then((topo) => {
+    import("world-atlas/land-110m.json")
+      .then((mod) => {
+        const topo = (mod as { default: any }).default ?? mod;
         if (!cancelled) setLand(feature(topo, topo.objects.land));
       })
       .catch(() => {

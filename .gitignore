@@ -66,8 +66,14 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variable files
-.env
-.env.*
+#
+# `.env*`, not `.env.*`. The dotted form requires a dot after `.env`, so
+# `.env~` -- what vim, emacs and several editors write when they save --
+# was not ignored. The ingestion repo learned this on 2026-09-09, when a
+# `.env.bak-preconsolidation` holding real credentials sat un-ignored in
+# the working tree. The same class of gap survived here, in the other
+# repo, until 2026-09-13. Match the whole family; re-admit the template.
+.env*
 !.env.example
 
 # parcel-bundler cache (https://parceljs.org/)
