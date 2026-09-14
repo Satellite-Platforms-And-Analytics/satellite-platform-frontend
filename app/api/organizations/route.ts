@@ -51,6 +51,20 @@ export const maxDuration = 15;
  */
 const LIMIT = 200;
 
+/**
+ * The window the production sparkline covers, in years back from now.
+ *
+ * FIXED, AND THE SAME FOR EVERY ROW. A sparkline whose x-range adapts to
+ * each organisation cannot be compared down a column — two rows of the
+ * same shape would mean different things, which is the defect this page
+ * already had once when bar length and ranking disagreed.
+ *
+ * 24 years reaches back past the modern constellation era to a period
+ * when annual output was in single digits for almost everyone, so the
+ * shape shows a ramp rather than a plateau.
+ */
+const PRODUCTION_WINDOW_YEARS = 24;
+
 export type OrganizationRow = {
   code: string;
   name: string;
@@ -62,6 +76,11 @@ export type OrganizationRow = {
   first_flight: string | null;
   last_flight: string | null;
   active_years: number | null;
+  /** Payloads per year across the shared window; index 0 is `windowStart`. */
+  production: number[];
+  peak_payloads: number | null;
+  peak_year: number | null;
+  payloads_last_5y: number | null;
 };
 
 export async function GET() {
@@ -101,6 +120,53 @@ export async function GET() {
     return Response.json({ error: error.message + hint }, { status: 502 });
   }
 
+  const codes = (data ?? []).map((r) => r.code as string);
+  const thisYear = new Date().getUTCFullYear();
+  const windowStart = thisYear - PRODUCTION_WINDOW_YEARS + 1;
+
+  // Production evidence (014). Two reads rather than one: a per-year
+  // series for the sparkline, and the peak/recent summary, which answer
+  // different questions and are computed differently. Neither is fatal —
+  // an organisation list without production is still a list, and failing
+  // the whole page because a view is missing would make 013 and 014 a
+  // single point of failure they need not be.
+  const byCode = new Map<string, number[]>();
+  const summary = new Map<
+    string,
+    { peak: number | null; peakYear: number | null; last5: number | null }
+  >();
+
+  if (codes.length) {
+    const { data: prod } = await supabase
+      .from("organization_production")
+      .select("code, year, payloads")
+      .in("code", codes)
+      .gte("year", windowStart);
+
+    for (const p of prod ?? []) {
+      const code = p.code as string;
+      const idx = (p.year as number) - windowStart;
+      if (idx < 0 || idx >= PRODUCTION_WINDOW_YEARS) continue;
+      const series =
+        byCode.get(code) ?? new Array(PRODUCTION_WINDOW_YEARS).fill(0);
+      series[idx] = Number(p.payloads ?? 0);
+      byCode.set(code, series);
+    }
+
+    const { data: sum } = await supabase
+      .from("organization_production_summary")
+      .select("code, peak_payloads, peak_year, payloads_last_5y")
+      .in("code", codes);
+
+    for (const s of sum ?? []) {
+      summary.set(s.code as string, {
+        peak: s.peak_payloads === null ? null : Number(s.peak_payloads),
+        peakYear: s.peak_year === null ? null : Number(s.peak_year),
+        last5: s.payloads_last_5y === null ? null : Number(s.payloads_last_5y),
+      });
+    }
+  }
+
   const organizations: OrganizationRow[] = (data ?? []).map((r) => ({
     code: r.code as string,
     name: r.display_name as string,
@@ -112,6 +178,12 @@ export async function GET() {
     first_flight: (r.first_flight as string | null) ?? null,
     last_flight: (r.last_flight as string | null) ?? null,
     active_years: r.active_years === null ? null : Number(r.active_years),
+    production:
+      byCode.get(r.code as string) ??
+      new Array(PRODUCTION_WINDOW_YEARS).fill(0),
+    peak_payloads: summary.get(r.code as string)?.peak ?? null,
+    peak_year: summary.get(r.code as string)?.peakYear ?? null,
+    payloads_last_5y: summary.get(r.code as string)?.last5 ?? null,
   }));
 
   const totalObjects = organizations.reduce((a, o) => a + o.objects, 0);
@@ -127,6 +199,7 @@ export async function GET() {
       // a coverage it does not have.
       totals: { objects: totalObjects, payloads: totalPayloads,
                 scope: `top ${organizations.length} organisations by object count` },
+      window: { start: windowStart, end: thisYear },
       organizations,
     },
     {

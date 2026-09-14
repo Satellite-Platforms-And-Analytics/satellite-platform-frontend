@@ -10,7 +10,11 @@ export const metadata = {
 
 export default function OrganizationsPage() {
   return (
-    <main>
+    // Wider than the 900px the reading pages use. This table carries ten
+    // columns including a 24-year sparkline, and at 900px the production
+    // evidence -- the reason the table was extended at all -- sat past the
+    // right edge behind a horizontal scrollbar nobody would find.
+    <main className="wide">
       <Nav current="organizations" />
       <header>
         <h1>Organisations</h1>

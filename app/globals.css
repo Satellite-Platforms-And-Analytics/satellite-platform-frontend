@@ -26,6 +26,12 @@ main {
   padding: 2rem 1.25rem 3rem;
 }
 
+/* For pages whose content is a wide table rather than prose. 900px is a
+   comfortable measure for reading and too narrow for ten columns. */
+main.wide {
+  max-width: 1200px;
+}
+
 header h1 {
   margin: 0 0 0.25rem;
   font-size: 1.35rem;
@@ -646,10 +652,30 @@ footer {
   z-index: 1;
 }
 
+/* Both text columns are capped and ellipsised, with the full value on
+   hover. An unbounded column pushes every column right of it off the
+   visible width — and the columns to the right here are the production
+   evidence the table exists to show. */
 .orgs td.role {
   color: var(--muted);
   font-size: 0.74rem;
+  max-width: 13rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.orgs td.orgname {
+  max-width: 17rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orgs td.span {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: 0.74rem;
 }
 
 @media (max-width: 620px) {
@@ -684,4 +710,40 @@ footer {
 .trailing em {
   font-style: normal;
   color: var(--muted);
+}
+
+/* ── Production sparkline ────────────────────────────────────────────── */
+/*
+ * Fixed domain on both axes across every row — see <Spark/>. A per-row
+ * scale would make four satellites in a good year look like four hundred.
+ */
+
+.spark {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 1.1rem;
+  width: 7.5rem;
+}
+
+.spark i {
+  flex: 1 1 0;
+  min-width: 1px;
+  background: #3987e5;
+  border-radius: 1px 1px 0 0;
+}
+
+/* A row with no output in the window is a dash, not an empty box: blank
+   space reads as "not loaded", a dash reads as "none". */
+.spark.empty {
+  display: inline-block;
+  width: 7.5rem;
+  color: var(--muted);
+  height: auto;
+}
+
+.peak-year {
+  font-style: normal;
+  color: var(--muted);
+  font-size: 0.7rem;
 }

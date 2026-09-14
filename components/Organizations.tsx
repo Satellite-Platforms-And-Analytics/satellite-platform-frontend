@@ -32,8 +32,56 @@ type Payload = {
   count: number;
   limit: number;
   totals: { objects: number; payloads: number; scope: string };
+  window: { start: number; end: number };
   organizations: OrganizationRow[];
 };
+
+/**
+ * Payloads per year, drawn on a domain shared by every row.
+ *
+ * BOTH AXES ARE FIXED ACROSS THE TABLE. The years are the same window for
+ * everyone, and the height is scaled to one maximum taken across all rows
+ * shown — not per row. A sparkline normalised to its own peak makes an
+ * organisation that built four satellites in a good year look exactly
+ * like one that built four hundred, which is the same defect as a bar
+ * chart whose length and ranking disagree, in miniature and harder to
+ * notice.
+ *
+ * The consequence is honest and looks wrong at first: next to SpaceX,
+ * almost every other row is a flat line. That IS the shape of this
+ * industry, and flattening it to make the table prettier would be
+ * inventing a different one.
+ */
+function Spark({
+  series,
+  max,
+  start,
+  label,
+}: {
+  series: number[];
+  max: number;
+  start: number;
+  label: string;
+}) {
+  const total = series.reduce((a, b) => a + b, 0);
+  if (!total) return <span className="spark empty" title={`${label}: none in this window`}>—</span>;
+  return (
+    <span
+      className="spark"
+      role="img"
+      aria-label={`${label}: ${total} payloads between ${start} and ${start + series.length - 1}`}
+      title={`${total} payloads ${start}–${start + series.length - 1}`}
+    >
+      {series.map((v, n) => (
+        <i
+          key={n}
+          style={{ height: v ? `${Math.max(8, (v / max) * 100)}%` : "1px" }}
+          data-year={start + n}
+        />
+      ))}
+    </span>
+  );
+}
 
 const PAYLOAD_FILL = "#3987e5";
 const OTHER_FILL = "#d95926";
@@ -100,6 +148,16 @@ export default function Organizations() {
     );
     return [...list].sort((a, b) => b[sortBy] - a[sortBy]);
   }, [data, query, sortBy]);
+
+  // One height scale for every sparkline on screen. See <Spark/>.
+  const sparkMax = useMemo(
+    () =>
+      Math.max(
+        1,
+        ...(data?.organizations ?? []).flatMap((o) => o.production ?? []),
+      ),
+    [data],
+  );
 
   const chart = rows.slice(0, CHART_ROWS);
 
@@ -283,6 +341,17 @@ export default function Organizations() {
       {/* Not "every organisation": the route returns the top 200 of
           4,108, and a heading that says otherwise is the same
           overclaiming the caveat above exists to prevent. */}
+      <p className="caveat" style={{ marginTop: "1.5rem" }}>
+        <strong>Production is evidence, not a readiness level.</strong> A
+        count of payloads per year says nothing about whether an
+        organisation built the spacecraft or bought it, whether a year
+        &rsquo;s output was one constellation or a decade arriving at once,
+        or whether the line still exists. <em>Peak</em> is what an
+        organisation has ever managed; <em>last 5y</em> is whether it still
+        does. Every sparkline shares one height scale, so a flat row beside
+        SpaceX is a real comparison rather than a rendering artefact.
+      </p>
+
       <h2>
         Top {data.count} organisations
         {query ? ` — ${rows.length} matching “${query}”` : ""}
@@ -297,26 +366,61 @@ export default function Organizations() {
               <th>State</th>
               <th className="num">Payloads</th>
               <th className="num">Objects</th>
-              <th className="num">First</th>
-              <th className="num">Last</th>
+              <th className="num">Peak</th>
+              <th className="num">Last 5y</th>
+              <th>
+                Payloads {data.window.start}–{data.window.end}
+              </th>
+              {/* First and last flight combined. Two columns for two
+                  numbers that are always read together cost width the
+                  production evidence needed more. */}
+              <th className="num">Active</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((o) => (
               <tr key={o.code}>
                 <td className="ref">{o.code}</td>
-                <td>{o.name}</td>
-                <td className="role">{roles(o.org_type)}</td>
+                <td className="orgname" title={o.name}>{o.name}</td>
+                {/* Truncated, with the full value on hover. GSFC's role
+                    string is "operator · launch agency · launch vehicle ·
+                    payload builder · site", and letting it size the
+                    column pushed Peak, Last 5y and the sparkline off the
+                    right edge — the three columns this table was just
+                    extended to show. */}
+                <td className="role" title={roles(o.org_type)}>
+                  {roles(o.org_type)}
+                </td>
                 <td className="ref">{o.state_code ?? "—"}</td>
                 <td className="num">{o.payloads.toLocaleString()}</td>
                 <td className="num">{o.objects.toLocaleString()}</td>
-                <td className="num">{year(o.first_flight)}</td>
-                <td className="num">{year(o.last_flight)}</td>
+                <td className="num" title={o.peak_year ? `peak in ${o.peak_year}` : undefined}>
+                  {o.peak_payloads ? o.peak_payloads.toLocaleString() : "—"}
+                  {o.peak_year ? (
+                    <em className="peak-year"> &rsquo;{String(o.peak_year).slice(2)}</em>
+                  ) : null}
+                </td>
+                <td className="num">
+                  {o.payloads_last_5y ? o.payloads_last_5y.toLocaleString() : "—"}
+                </td>
+                <td>
+                  <Spark
+                    series={o.production ?? []}
+                    max={sparkMax}
+                    start={data.window.start}
+                    label={o.short || o.name}
+                  />
+                </td>
+                <td className="num span">
+                  {o.first_flight
+                    ? `${year(o.first_flight)}–${year(o.last_flight)}`
+                    : "—"}
+                </td>
               </tr>
             ))}
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="muted">
+                <td colSpan={10} className="muted">
                   Nothing matches that search.
                 </td>
               </tr>
