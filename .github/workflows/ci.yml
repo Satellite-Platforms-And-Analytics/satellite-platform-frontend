@@ -1,0 +1,98 @@
+# Frontend CI.
+#
+# WHY THIS DID NOT EXIST UNTIL NOW
+# ================================
+# Vercel builds on push, so a broken build was caught -- eventually, by a
+# failed deployment, which is a slow and confusing way to learn that a
+# type does not check. Nothing ever ran `tsc --noEmit` or `npm audit`
+# against this repository at all.
+#
+# The immediate proof it was needed: commit 9ff0e4b added `world-atlas`
+# as a dependency, and without an install the build fails with
+# "Cannot find module 'world-atlas/land-110m.json'". `npm ci` here would
+# have said so in ninety seconds, on the commit, instead of at deploy
+# time.
+#
+# `npm ci`, not `npm install`: it installs exactly what package-lock.json
+# says and fails if the lock and package.json disagree, rather than
+# quietly rewriting the lock. For a security control, "fails if they
+# disagree" is the whole point.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  # An advisory lands without anyone touching this repository, so a scan
+  # that only runs on push can never see one.
+  schedule:
+    - cron: "23 7 * * 1"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# SECURITY: least privilege. This workflow reads code and nothing else.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Typecheck and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install exactly what the lock file says
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build
+        # Real values are not needed: both API routes read their
+        # environment at request time and fail loudly when it is missing,
+        # and neither page is prerendered against the database. Supplying
+        # placeholders keeps the build honest without putting a secret in
+        # CI at all -- this workflow needs no secrets, and that is worth
+        # preserving.
+        env:
+          SUPABASE_URL: https://placeholder.supabase.co
+          SUPABASE_ANON_KEY: placeholder-not-a-real-key
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npm run build
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    # Separate from the build for the same reason as the ingestion repo:
+    # "the code is broken" and "a dependency has a new advisory" should
+    # not arrive as one signal. It still fails, because a finding gets a
+    # check that can go red, not a note.
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install exactly what the lock file says
+        run: npm ci
+
+      - name: Audit
+        # `high` and above. Every advisory would make this permanently red
+        # on transitive dev dependencies, and a check that is always red
+        # is read exactly as often as one that can never fail.
+        run: npm audit --audit-level=high

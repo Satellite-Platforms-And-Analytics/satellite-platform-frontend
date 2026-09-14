@@ -1,0 +1,34 @@
+# Dependency updates for the frontend.
+#
+# npm dependencies are already locked with integrity hashes in
+# package-lock.json, which is the property requirements.txt lacks
+# (AD-064). So the risk here is not "what resolves today" but "the pin is
+# old and an advisory has landed against it". That is exactly what
+# Dependabot answers.
+#
+# Weekly. A pull request nobody reads is not a security control.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "deps"
+    groups:
+      # React and Next move together; separate PRs for them create
+      # combinations that were never tested as a set.
+      react-and-next:
+        patterns: ["react", "react-dom", "next", "@types/react*"]
+      types:
+        patterns: ["@types/*"]
+        exclude-patterns: ["@types/react*"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci"
