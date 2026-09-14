@@ -9,6 +9,7 @@ import Link from "next/link";
 const LINKS = [
   { key: "globe", href: "/", label: "Globe" },
   { key: "readiness", href: "/readiness", label: "Readiness" },
+  { key: "organizations", href: "/organizations", label: "Organisations" },
 ];
 
 export default function Nav({ current }: { current: string }) {

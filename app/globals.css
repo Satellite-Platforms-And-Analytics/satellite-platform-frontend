@@ -557,3 +557,131 @@ footer {
     font-size: 0.62rem;
   }
 }
+
+/* ── Organisations ───────────────────────────────────────────────────── */
+/*
+ * Two series, two hues, validated against this file's --bg (#070b14):
+ * payloads #3987e5, other objects #d95926. Worst-pair CVD ΔE 26.8,
+ * normal-vision 31.8 — both far clear of the floors. Every segment also
+ * carries its number in text, so nothing is encoded by colour alone.
+ */
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 720px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.bar-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bar-track {
+  display: flex;
+  /* 2px of surface between segments — without it the two series merge
+     into one block and the split stops being readable. */
+  gap: 2px;
+  min-width: 0;
+  align-items: stretch;
+  height: 1.45rem;
+}
+
+.seg {
+  /* Rounded data-end only, anchored at the baseline: the left edge of the
+     first segment and the right edge of the last. */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 0.35rem;
+  min-width: 2px;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: #070b14;
+  font-weight: 600;
+  overflow: hidden;
+}
+
+.seg.pay {
+  border-radius: 3px 0 0 3px;
+}
+
+.seg.oth {
+  border-radius: 0 3px 3px 0;
+}
+
+.bar-row .seg:only-child {
+  border-radius: 3px;
+}
+
+/* The decision to draw a number at all is made in the component, from the
+   segment's own width — not here. A CSS rule cannot know how wide 12,834
+   renders, and the first version of this comment described a behaviour
+   that did not exist anywhere. */
+.seg span {
+  white-space: nowrap;
+}
+
+.orgs .table-wrap {
+  max-height: 34rem;
+  overflow-y: auto;
+}
+
+.orgs .table-wrap thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 1;
+}
+
+.orgs td.role {
+  color: var(--muted);
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 620px) {
+  .bar-row {
+    grid-template-columns: 7rem minmax(0, 1fr);
+  }
+  .bar-label {
+    font-size: 0.7rem;
+  }
+}
+
+/* The "+N other" figure beside a single-series bar. Muted and in text,
+   because it is context for the ranked quantity rather than part of it. */
+.trailing {
+  align-self: center;
+  padding-left: 0.45rem;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The ranked figure is ink-coloured and bold; the context figure is
+   muted. Two numbers side by side must not look equally important when
+   only one of them is what the chart ranks on. */
+.trailing b {
+  color: var(--fg);
+  font-weight: 600;
+  margin-right: 0.4rem;
+}
+
+.trailing em {
+  font-style: normal;
+  color: var(--muted);
+}
