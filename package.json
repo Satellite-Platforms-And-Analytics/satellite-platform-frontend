@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@types/d3-geo": "^3.1.0",
-    "@types/node": "^20.16.11",
+    "@types/node": "^26.5.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "@types/topojson-client": "^3.1.4",
