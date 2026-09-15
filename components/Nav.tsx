@@ -10,6 +10,7 @@ const LINKS = [
   { key: "globe", href: "/", label: "Globe" },
   { key: "readiness", href: "/readiness", label: "Readiness" },
   { key: "organizations", href: "/organizations", label: "Organisations" },
+  { key: "research", href: "/research", label: "R&D" },
 ];
 
 export default function Nav({ current }: { current: string }) {

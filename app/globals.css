@@ -747,3 +747,102 @@ footer {
   color: var(--muted);
   font-size: 0.7rem;
 }
+
+/* ── R&D (/research), added 2026-09-15 ─────────────────────────────────
+   The seventh MVP piece (AD-084). Reuses the organisations chart's two
+   fills verbatim so the app speaks one visual language; they were
+   re-validated against this surface rather than assumed — worst adjacent
+   pair ΔE 26.8 protan, 31.8 normal, both above 3:1 contrast. */
+
+/* An inline legend, always present for two series. Identity is never
+   colour-alone: each swatch is followed by its name, and every segment
+   carries a title attribute. */
+.legend.inline {
+  display: flex;
+  gap: 1.1rem;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.legend.inline i {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  margin-right: 0.35rem;
+  vertical-align: -1px;
+}
+
+/* TRL range on a FIXED 1–9 scale, identical for every row (AD-082).
+   Normalised per row, an area spanning 2–3 would look the same as one
+   spanning 1–9. */
+.trl-range {
+  position: relative;
+  display: block;
+  width: 7.5rem;
+  height: 1.1rem;
+}
+
+.trl-axis {
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 1px;
+  background: var(--line);
+}
+
+.trl-span {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 0.45rem;
+  border-radius: 3px;
+  background: #3987e5;
+}
+
+/* The mean, marked INSIDE the range rather than replacing it. A 2px
+   surface ring keeps it readable where it sits on the span. */
+.trl-mean {
+  position: absolute;
+  top: 50%;
+  width: 0.42rem;
+  height: 0.42rem;
+  margin-left: -0.21rem;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--fg);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.trl-empty {
+  color: var(--muted);
+}
+
+/* A match made under the loosened rule stays visible as one (AD-085). */
+.loose {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.controls label.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.controls label.check input {
+  width: auto;
+  margin: 0;
+}
+
+.table-wrap caption {
+  caption-side: top;
+  text-align: left;
+  padding: 0 0 0.6rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
