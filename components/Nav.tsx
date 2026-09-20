@@ -11,6 +11,7 @@ const LINKS = [
   { key: "readiness", href: "/readiness", label: "Readiness" },
   { key: "organizations", href: "/organizations", label: "Organisations" },
   { key: "research", href: "/research", label: "R&D" },
+  { key: "launches", href: "/launches", label: "Launches" },
 ];
 
 export default function Nav({ current }: { current: string }) {

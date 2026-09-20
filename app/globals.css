@@ -748,6 +748,56 @@ footer {
   font-size: 0.7rem;
 }
 
+/* ── Upcoming launches (/launches), added 2026-09-20 ───────────────────
+   MVP piece 2's surface. The page's whole job is keeping 20 real dates
+   distinguishable from 343 guesses, so the styling has exactly two jobs:
+   make "no date at all" read as an absence rather than a category, and
+   make an approximate time look like prose rather than a timestamp. */
+
+/* Undated is an ABSENCE, not a third series. It gets the muted ink token
+   and a hatch rather than a hue, because giving it a colour would imply
+   it belongs on the same axis as the other two. */
+.seg.none {
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(148, 163, 184, 0.35) 0 3px,
+    transparent 3px 6px
+  );
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.legend.inline i.none {
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(148, 163, 184, 0.55) 0 2px,
+    transparent 2px 4px
+  );
+  border: 1px solid var(--line);
+}
+
+/* An approximate time is PROSE. Not tabular-nums, not right-aligned, not
+   monospaced - every one of those signals "this is a measurement", and
+   the whole point is that "2027" and "the 2030s" are not. */
+.table-wrap td.approx,
+.table-wrap th.approx {
+  font-variant-numeric: normal;
+  text-align: left;
+  color: var(--fg);
+  font-style: italic;
+}
+
+main.wide h2 {
+  margin: 2.2rem 0 0.2rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+main.wide h2 + p.muted {
+  margin: 0 0 0.9rem;
+  font-size: 0.82rem;
+}
+
 /* ── R&D (/research), added 2026-09-15 ─────────────────────────────────
    The seventh MVP piece (AD-084). Reuses the organisations chart's two
    fills verbatim so the app speaks one visual language; they were
